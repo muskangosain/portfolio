@@ -15,7 +15,7 @@ export const profile = {
 
 export const skills = {
   Frontend: ['HTML', 'CSS', 'JavaScript', 'TypeScript', 'React', 'Tailwind', 'Framer Motion'],
-  Tools: ['Git', 'GitHub', 'VS Code', 'Vercel', 'Claude Code'],
+  Tools: ['Git', 'GitHub', 'VS Code', 'Vercel'],
   Learning: ['[Something you are learning now]'],
 }
 
