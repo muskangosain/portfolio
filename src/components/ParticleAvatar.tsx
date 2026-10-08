@@ -14,9 +14,10 @@ type Particle = {
   color: string
   delay: number
   phase: number
+  mouth: number // 0–1, how close it sits to the mouth (used while speaking)
 }
 
-type Props = { src: string; alt: string }
+type Props = { src: string; alt: string; speaking?: boolean }
 
 // The canvas extends past the avatar by this fraction on each side, so particles have room to move.
 const MARGIN = 0.25
@@ -24,9 +25,13 @@ const MARGIN = 0.25
 const INTRO_DURATION = 1.5 // seconds for the fly-in
 const SPRING = 0.06 // pull back toward home
 const DAMPING = 0.82 // velocity kept each frame
-const REPEL_RADIUS = 60 // px around the cursor
-const REPEL_FORCE = 4
+const REPEL_RADIUS = 50 // px around the cursor
+const REPEL_FORCE = 1.6
 const DRIFT = 0.6 // px of idle wobble
+
+// Where the mouth sits in avatar.jpg (0–1 of the image). Update if the photo changes.
+const MOUTH = { x: 0.54, y: 0.61, radius: 0.1 }
+const MOUTH_PULSE = 0.18 // how far mouth particles move out from its centre at the peak
 
 const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4)
 
@@ -60,6 +65,7 @@ function sampleParticles(img: HTMLImageElement, box: number, cols: number): Part
       // Start anywhere in a zone twice the canvas size, so some particles fly in from off-canvas.
       const sx = (Math.random() * 2 - 0.5) * area
       const sy = (Math.random() * 2 - 0.5) * area
+      const mouthDist = Math.hypot((col + 0.5) / cols - MOUTH.x, (row + 0.5) / cols - MOUTH.y)
       particles.push({
         hx,
         hy,
@@ -73,17 +79,20 @@ function sampleParticles(img: HTMLImageElement, box: number, cols: number): Part
         color: `rgba(${r},${g},${b},${alpha.toFixed(2)})`,
         delay: Math.random() * 0.3,
         phase: Math.random() * Math.PI * 2,
+        mouth: Math.max(0, 1 - mouthDist / MOUTH.radius),
       })
     }
   }
   return particles
 }
 
-export default function ParticleAvatar({ src, alt }: Props) {
+export default function ParticleAvatar({ src, alt, speaking = false }: Props) {
   const reduced = useReducedMotion()
   const [failed, setFailed] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const speakingRef = useRef(speaking)
+  speakingRef.current = speaking
 
   useEffect(() => {
     if (reduced || failed) return
@@ -102,6 +111,9 @@ export default function ParticleAvatar({ src, alt }: Props) {
     let raf = 0
     let running = false
     let onScreen = true
+    let talk = 0 // eases between 0 (quiet) and 1 (speaking)
+    let mouthX = 0
+    let mouthY = 0
     const mouse = { x: -9999, y: -9999 }
 
     const img = new Image()
@@ -117,6 +129,8 @@ export default function ParticleAvatar({ src, alt }: Props) {
       // Fewer particles on small screens and low-end devices.
       const lowEnd = box < 260 || (navigator.hardwareConcurrency ?? 8) <= 4
       particles = sampleParticles(img, box, lowEnd ? 64 : 96)
+      mouthX = box * MARGIN + MOUTH.x * box
+      mouthY = box * MARGIN + MOUTH.y * box
       introDone = !withIntro
       if (!withIntro) for (const p of particles) [p.x, p.y] = [p.hx, p.hy]
       introStart = -1 // set from the first animation frame, so timing uses one clock
@@ -140,10 +154,21 @@ export default function ParticleAvatar({ src, alt }: Props) {
         return
       }
 
+      talk += ((speakingRef.current ? 1 : 0) - talk) * 0.08
+      // Two overlapping waves so the mouth movement feels like speech, not a metronome.
+      const syllable = talk * MOUTH_PULSE * Math.abs(Math.sin(t * 9) * 0.6 + Math.sin(t * 14.3) * 0.4)
+
       for (const p of particles) {
         // Idle drift: the home point wobbles slightly so the face never looks frozen.
         const tx = p.hx + Math.sin(t * 0.8 + p.phase) * DRIFT
-        const ty = p.hy + Math.cos(t * 0.7 + p.phase) * DRIFT
+        let ty = p.hy + Math.cos(t * 0.7 + p.phase) * DRIFT
+        let txs = tx
+
+        // Speaking: particles around the mouth breathe outward from its centre.
+        if (p.mouth > 0 && syllable > 0.001) {
+          txs += (p.hx - mouthX) * syllable * p.mouth
+          ty += (p.hy - mouthY) * syllable * p.mouth * 1.6
+        }
 
         // Cursor repulsion: push away, stronger the closer the cursor is.
         const dx = p.x - mouse.x
@@ -157,7 +182,7 @@ export default function ParticleAvatar({ src, alt }: Props) {
         }
 
         // Spring back home.
-        p.vx = (p.vx + (tx - p.x) * SPRING) * DAMPING
+        p.vx = (p.vx + (txs - p.x) * SPRING) * DAMPING
         p.vy = (p.vy + (ty - p.y) * SPRING) * DAMPING
         p.x += p.vx
         p.y += p.vy

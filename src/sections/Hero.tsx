@@ -36,7 +36,7 @@ export default function Hero() {
         <div
           className={`relative mx-auto size-56 rounded-full border border-transparent transition-colors duration-500 sm:size-72 ${speaking ? 'speaking' : ''}`}
         >
-          <ParticleAvatar src="/avatar.jpg" alt={`Portrait of ${profile.name}`} />
+          <ParticleAvatar src="/avatar.jpg" alt={`Portrait of ${profile.name}`} speaking={speaking} />
         </div>
 
         <div className="min-w-0">
