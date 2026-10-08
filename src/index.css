@@ -46,8 +46,45 @@ body {
   border-radius: 4px;
 }
 
+/* Blinking caret shown while text is streaming */
+.caret {
+  display: inline-block;
+  width: 0.5ch;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.12em;
+  background: var(--accent);
+  animation: blink 1s steps(1) infinite;
+}
+
+/* Glow ring that breathes while the avatar is "speaking" */
+.speaking {
+  border-color: var(--accent);
+  animation: breathe 1.8s var(--ease-out) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 14px color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  .caret,
+  .speaking {
+    animation: none;
   }
 }
