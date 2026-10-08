@@ -29,8 +29,8 @@ const REPEL_RADIUS = 50 // px around the cursor
 const REPEL_FORCE = 1.6
 const DRIFT = 0.6 // px of idle wobble
 
-// Where the mouth sits in avatar.jpg (0–1 of the image). Update if the photo changes.
-const MOUTH = { x: 0.54, y: 0.61, radius: 0.1 }
+// Where the mouth sits in the avatar image (0–1 of the image). Update if the photo changes.
+const MOUTH = { x: 0.49, y: 0.66, radius: 0.1 }
 const MOUTH_PULSE = 0.18 // how far mouth particles move out from its centre at the peak
 
 const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4)
@@ -55,7 +55,8 @@ function sampleParticles(img: HTMLImageElement, box: number, cols: number): Part
       if (dist > 0.5) continue
 
       const i = (row * cols + col) * 4
-      const [r, g, b] = [data[i], data[i + 1], data[i + 2]]
+      const [r, g, b, a] = [data[i], data[i + 1], data[i + 2], data[i + 3]]
+      if (a < 128) continue // transparent background
       const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
       if (luminance < 0.08) continue // too dark to see on the background anyway
 
