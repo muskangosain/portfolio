@@ -46,7 +46,7 @@ export default function Hero() {
           <h1 className="mt-4 text-5xl font-bold tracking-tight sm:text-7xl">{profile.name}</h1>
 
           <div className="mt-8 space-y-5">
-            <div ref={threadRef} role="log" aria-live="polite" className="max-h-[26rem] space-y-5 overflow-y-auto pr-1">
+            <div ref={threadRef} role="log" aria-live="polite" className="max-h-[32rem] space-y-5 overflow-y-auto pr-1">
               <IntroBubble onDone={() => stopSpeaking('intro')} />
               {messages.map((m) => (
                 <ChatResponse
