@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import IntroBubble from '../components/IntroBubble'
 import AskBar, { QuestionChips } from '../components/AskBar'
 import ChatResponse from '../components/ChatResponse'
+import ParticleAvatar from '../components/ParticleAvatar'
 import { getAnswer, type Answer } from '../data/knowledge'
 import { profile } from '../data/profile'
 
@@ -32,11 +33,10 @@ export default function Hero() {
   return (
     <section id="top" aria-label="Introduction" className="flex min-h-dvh items-center pt-16">
       <div className="mx-auto grid w-full max-w-5xl items-center gap-12 px-4 py-12 sm:px-6 md:grid-cols-[auto_1fr]">
-        {/* Placeholder — becomes the particle avatar in Phase 2 */}
         <div
-          className={`mx-auto grid size-56 place-items-center rounded-full border border-dashed border-border transition-colors duration-500 sm:size-72 ${speaking ? 'speaking' : ''}`}
+          className={`relative mx-auto size-56 rounded-full border border-transparent transition-colors duration-500 sm:size-72 ${speaking ? 'speaking' : ''}`}
         >
-          <span className="font-mono text-xs text-muted">[ particle avatar ]</span>
+          <ParticleAvatar src="/avatar.jpg" alt={`Portrait of ${profile.name}`} />
         </div>
 
         <div className="min-w-0">
