@@ -1,15 +1,33 @@
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import IntroBubble from '../components/IntroBubble'
 import AskBar, { QuestionChips } from '../components/AskBar'
+import ChatResponse from '../components/ChatResponse'
+import { getAnswer, type Answer } from '../data/knowledge'
 import { profile } from '../data/profile'
 
+type Message = { id: number; question: string; answer: Answer }
+
 export default function Hero() {
-  const [speaking, setSpeaking] = useState(true)
-  const [questions, setQuestions] = useState<string[]>([])
+  // Which message is currently "talking" — the intro first, then each answer as it streams.
+  const [streamingId, setStreamingId] = useState<number | 'intro' | null>('intro')
+  const [messages, setMessages] = useState<Message[]>([])
+  const nextId = useRef(0)
+  const threadRef = useRef<HTMLDivElement>(null)
+
+  const speaking = streamingId !== null
 
   function ask(question: string) {
-    setQuestions((qs) => [...qs, question])
+    const id = nextId.current++
+    setMessages((ms) => [...ms, { id, question, answer: getAnswer(question) }])
+    setStreamingId(id)
   }
+
+  const stopSpeaking = (id: number | 'intro') => setStreamingId((current) => (current === id ? null : current))
+
+  const scrollThread = useCallback(() => {
+    const thread = threadRef.current
+    if (thread) thread.scrollTop = thread.scrollHeight
+  }, [])
 
   return (
     <section id="top" aria-label="Introduction" className="flex min-h-dvh items-center pt-16">
@@ -28,13 +46,19 @@ export default function Hero() {
           <h1 className="mt-4 text-5xl font-bold tracking-tight sm:text-7xl">{profile.name}</h1>
 
           <div className="mt-8 space-y-5">
-            <IntroBubble onDone={() => setSpeaking(false)} />
+            <div ref={threadRef} role="log" aria-live="polite" className="max-h-[26rem] space-y-5 overflow-y-auto pr-1">
+              <IntroBubble onDone={() => stopSpeaking('intro')} />
+              {messages.map((m) => (
+                <ChatResponse
+                  key={m.id}
+                  question={m.question}
+                  answer={m.answer}
+                  onProgress={scrollThread}
+                  onDone={() => stopSpeaking(m.id)}
+                />
+              ))}
+            </div>
             <QuestionChips onAsk={ask} />
-            {questions.map((q, i) => (
-              <p key={i} className="font-mono text-sm text-muted">
-                <span className="text-accent">&gt;</span> {q}
-              </p>
-            ))}
             <AskBar onAsk={ask} />
           </div>
         </div>
