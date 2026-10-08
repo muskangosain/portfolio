@@ -1,0 +1,10 @@
+node_modules
+dist
+.vercel
+.DS_Store
+*.log
+
+# secrets — never commit
+.env
+.env.*
+!.env.example
